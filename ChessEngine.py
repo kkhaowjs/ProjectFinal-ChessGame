@@ -183,7 +183,7 @@ class GameState():
                         pawnPromotion = True
                     moves.append(Move((r, c), (r+moveAmount, c-1), self.board,pawnPromotion=pawnPromotion))
                 if (r+moveAmount, c-1) == self.enpassantPossible:
-                        moves.append(Move((r, c), (r+moveAmount, c-1), self.board,isEnpassntMove=True))
+                        moves.append(Move((r, c), (r+moveAmount, c-1), self.board,isEnpassantMove=True))
         if c+1 <= 7: #captures to the right
             if not piecePinned or pinDirection == (moveAmount, 1):
                 if self.board[r+moveAmount][c+1][0] == enemyColor:
@@ -191,7 +191,7 @@ class GameState():
                         pawnPromotion = True
                     moves.append(Move((r, c), (r+moveAmount, c+1), self.board,pawnPromotion=pawnPromotion))
                 if (r+moveAmount, c+1) == self.enpassantPossible:
-                        moves.append(Move((r, c), (r+moveAmount, c+1), self.board,isEnpassntMove=True))
+                        moves.append(Move((r, c), (r+moveAmount, c+1), self.board,isEnpassantMove=True))
 
     '''
     Get all the rook moves
@@ -393,7 +393,7 @@ class Move():
     filesToCols = {"a":0,"b":1,"c":2,"d":3,"e":4,"f":5, "g":6,"h":7}
     colsToFiles = {v:k for k,v in filesToCols.items()}
     
-    def __init__(self, startSq , endSq, board,pawnPromotion=False, isEnpassantMove = False): #optional parameter
+    def __init__(self, startSq , endSq, board,pawnPromotion = False, isEnpassantMove = False): #optional parameter
         self.startRow = startSq[0]
         self.startCol = startSq[1]
         self.endRow = endSq[0]
