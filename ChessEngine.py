@@ -25,6 +25,8 @@ class GameState():
         #King Track
         self.whiteKingLocation = (7, 4)
         self.blackKingLocation = (0, 4)
+        self.checkmate = False
+        self.stalemate = False
         self.inCheck = False
         self.pins = []
         self.checks = []
@@ -185,8 +187,17 @@ class GameState():
             moves = self.getAllPossibleMoves()
 
         # # Add castling moves
-        # self.getCastleMoves(kingRow, kingCol, moves)
+        # self.getCastleMoves(kingRow, kingCol, moves)        
         self.getCastleMoves(kingRow, kingCol, moves)
+        
+        if len(moves) == 0:
+            if self.inCheck:
+                self.checkmate = True
+            else:
+                self.stalemate = True
+        else:
+            self.checkmate = False
+            self.stalemate = False
 
         return moves
 
