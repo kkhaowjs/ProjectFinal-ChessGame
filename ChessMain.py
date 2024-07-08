@@ -3,13 +3,13 @@ Handling user input and displaying the current GameState Object.
 """
 
 import pygame as p
-import ChessEngine
+import ChessEngine, AiMoveScript
 
 WIDTH = HEIGHT = 512 #400 is another option
 DIMENSION = 8 #dimension of a chess board is 8x8
 SQ_SIZE = HEIGHT//DIMENSION
 MAX_FPS = 15 #for animatioins later on
-IMAGES ={}
+IMAGES = {}
 
 '''
 Initialize a global directory of images.
@@ -38,13 +38,16 @@ def main():
     sqSelected = () #no square selected #track tuple : (row,col)
     playerClicks = [] #track 2 tuple : [(r,c),(r,c)]
     gameOver = False
+    playerOne = True #if a human playing white, False if ai playing white
+    playerTwo = True #if a human playing black, True if ai playing black
     while running :
+        humanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
             #mouse handle
             elif e.type == p.MOUSEBUTTONDOWN:
-                if not gameOver:
+                if not gameOver and humanTurn:
                     location = p.mouse.get_pos() #(x,y) location of mouse
                     col = location[0]//SQ_SIZE
                     row = location[1]//SQ_SIZE
@@ -72,6 +75,7 @@ def main():
                     gs.undoMove()
                     moveMade = True
                     animate = False
+                    gameOver = False
                 if e.key == p.K_r: #reset when 'r' is pressed
                     gs = ChessEngine.GameState()
                     validMoves = gs.getValidMoves()
@@ -79,7 +83,17 @@ def main():
                     playerClicks = []
                     moveMade = False
                     animate = False
+                    gameOver = False
                     
+        #AI move
+        if not gameOver and not humanTurn:
+            AIMove = AiMoveScript.findBestMoveMinMax(gs, validMoves)
+            if AIMove is None:
+                AIMove = AiMoveScript.findRandomMove(validMoves)
+            gs.makeMove(AIMove)
+            moveMade = True
+            animate = True
+        
         if moveMade:
             if animate:
                 animateMove(gs.moveLog[-1], screen, gs.board, clock)

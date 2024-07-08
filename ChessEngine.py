@@ -126,6 +126,9 @@ class GameState():
                     self.board[move.endRow][move.endCol - 2] = self.board[move.endRow][move.endCol + 1]
                     self.board[move.endRow][move.endCol + 1] = '--'
     
+        self.checkmate = False;
+        self.stalemate = False;
+    
     def updateCastleRights(self, move):
         if move.pieceMoved == 'wK':
             self.currentCastlingRights.wks = False
@@ -145,6 +148,8 @@ class GameState():
                     self.currentCastlingRights.bqs = False
                 elif move.startCol == 7:  # right rook
                     self.currentCastlingRights.bks = False
+                    
+        
     
 
     '''
@@ -489,8 +494,6 @@ class CastleRights:
         self.bqs = bqs  # Black queen-side
 
 class Move():
-    #maps key values
-    #key : value
     ranksToRows = {"1":7,"2":6,"3":5,"4":4,"5":3,"6":2,"7":1,"8":0}
     rowsToRanks = {v:k for k,v in ranksToRows.items()}
     filesToCols = {"a":0,"b":1,"c":2,"d":3,"e":4,"f":5, "g":6,"h":7}
@@ -513,7 +516,7 @@ class Move():
         self.isCastleMove = isCastleMove
 
         self.moveID = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol
-        print(self.moveID)
+        # print(self.moveID)
         
     '''
     Overriding a the equals method
