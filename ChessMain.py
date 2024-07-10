@@ -90,7 +90,7 @@ def main():
                     
         #AI move
         if not gameOver and not humanTurn:
-            AIMove = AiMoveScript.findBestMove(gs, validMoves)
+            AIMove = AiMoveScript.findBestMoveMinMax(gs, validMoves)
             if AIMove is None:
                 AIMove = AiMoveScript.findRandomMove(validMoves)
             gs.makeMove(AIMove)
