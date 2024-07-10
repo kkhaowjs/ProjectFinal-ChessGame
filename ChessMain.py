@@ -41,8 +41,8 @@ def main():
     sqSelected = () #no square selected #track tuple : (row,col)
     playerClicks = [] #track 2 tuple : [(r,c),(r,c)]
     gameOver = False
-    playerOne = True #if a human playing white, False if ai playing white
-    playerTwo = True #if a human playing black, True if ai playing black
+    playerOne = False #if a human playing white, False if ai playing white
+    playerTwo = False #if a human playing black, True if ai playing black
     while running :
         humanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
         for e in p.event.get():
@@ -90,7 +90,7 @@ def main():
                     
         #AI move
         if not gameOver and not humanTurn:
-            AIMove = AiMoveScript.findBestMoveMinMax(gs, validMoves)
+            AIMove = AiMoveScript.findBestMoveMinMaxWithNoRecursion(gs, validMoves)
             if AIMove is None:
                 AIMove = AiMoveScript.findRandomMove(validMoves)
             gs.makeMove(AIMove)

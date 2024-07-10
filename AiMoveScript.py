@@ -1,14 +1,14 @@
 import random
 
-pieceScore = {'K': 0, 'Q': 10, 'R': 5, 'B': 4, 'N': 3, 'p': 1}
+pieceScore = {"K": 0, "Q": 9, "R": 5, "B": 3, "N": 3, "p": 1}
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 2
+DEPTH = 3
 
 def findRandomMove(validMoves):
     return validMoves[random.randint(0, len(validMoves)-1)]
 
-def findBestMove(gs, validMoves):
+def  findBestMoveMinMaxWithNoRecursion(gs, validMoves):
     turnMultiplier = 1 if gs.whiteToMove else -1
     opponentMinMaxScore = CHECKMATE
     bestPlyerMove = None
@@ -77,23 +77,54 @@ def findMoveMinMax(gs, validMoves, depth, whiteToMove):
             gs.undoMove()
         return minScore
 
-def findMoveNegaMinMax(gs, validMoves, depth, turnMultiplier):
-    global nextMove
+def findBestMoveNegaMax(gs, validMoves):
+    global nextMove, counter
+    nextMove = None
+    random.shuffle(validMoves)
+    counter = 0
+    findMoveNegaMax(gs, validMoves, DEPTH, 1 if gs.whiteToMove else -1)
+    # findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+    return nextMove
+
+def findMoveNegaMax(gs, validMoves, depth, turnMultiplier):
+    global nextMove, counter
     if depth == 0:
         return turnMultiplier * scoreBoard(gs)
-    
     maxScore = -CHECKMATE
     for move in validMoves:
         gs.makeMove(move)
         nextMove = gs.getValidMoves()
-        score = -findMoveNegaMinMax(gs, nextMove, depth - 1, -turnMultiplier)
+        score = -findMoveNegaMax(gs, nextMove, depth - 1, -turnMultiplier)
         if score > maxScore:
             maxScore = score
             if depth == DEPTH:
                 nextMove = move
         gs.undoMove()
     return maxScore
+
+def findMoveNegaMaxAlphaBeta(gs, validMoves, depth, alpha, beta, turnMultiplier):
+    global nextMove, counter
+    counter += 1
+    if depth == 0:
+        return turnMultiplier * scoreBoard(gs)
+
     
+    maxScore = -CHECKMATE
+    for move in validMoves:
+        gs.makeMove(move)
+        nextMove = gs.getValidMoves()
+        score = -findMoveNegaMaxAlphaBeta(gs, nextMove, depth - 1, -beta, -alpha, -turnMultiplier)
+        if score > maxScore:
+            maxScore = score
+            if depth == DEPTH:
+                nextMove = move
+        gs.undoMove()
+        if maxScore > alpha:
+            alpha = maxScore
+        if alpha >= beta:
+            break
+    return maxScore
+
 def scoreBoard(gs):
     if gs.checkmate:
         if gs.whiteToMove:
