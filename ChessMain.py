@@ -3,7 +3,7 @@ Handling user input and displaying the current GameState Object.
 """
 
 import pygame as p
-import ChessEngine, AiMoveScript
+import ChessEngine, AiMoveScript, AiOldVersion
 
 BOARD_WIDTH = BOARD_HEIGHT = 512 #400 is another option
 MOVE_LOG_PANEL_WIDTH = 250
@@ -90,7 +90,7 @@ def main():
                     
         #AI move
         if not gameOver and not humanTurn:
-            AIMove = AiMoveScript.findBestMoveMinMaxWithNoRecursion(gs, validMoves)
+            AIMove = AiMoveScript.findBestMoveMinMax(gs, validMoves)
             if AIMove is None:
                 AIMove = AiMoveScript.findRandomMove(validMoves)
             gs.makeMove(AIMove)
