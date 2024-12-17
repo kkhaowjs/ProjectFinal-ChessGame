@@ -8,14 +8,15 @@ class GameState():
         #The second character repersents the type of the piece, 'K', 'Q', 'R', 'B', 'N','P'.
         #"--" - represents an empty space with no piece.
         self.board = [
-            ["bR","bN","bB","bQ","bK","bB","bN","bR"],
-            ["bp","bp","bp","bp","bp","bp","bp","bp"],
-            ["--","--","--","--","--","--","--","--",],
-            ["--","--","--","--","--","--","--","--",],
-            ["--","--","--","--","--","--","--","--",],
-            ["--","--","--","--","--","--","--","--",],
-            ["wp","wp","wp","wp","wp","wp","wp","wp"],
-            ["wR","wN","wB","wQ","wK","wB","wN","wR"],
+            # Initialize the board with pieces
+            ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
+            ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
+            ["--", "--", "--", "--", "--", "--", "--", "--"],
+            ["--", "--", "--", "--", "--", "--", "--", "--"],
+            ["--", "--", "--", "--", "--", "--", "--", "--"],
+            ["--", "--", "--", "--", "--", "--", "--", "--"],
+            ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
+            ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         ]
         self.moveFunctions = {'p': self.getPawnMoves, 'R': self.getRookMoves, 'N': self.getKnightMoves,
                              'B': self.getBishopMoves, 'Q': self.getQueenMoves, 'K': self.getKingMoves}
@@ -41,11 +42,90 @@ class GameState():
         self.currentCastlingRights = CastleRights(True, True, True, True)  # Initialize castling rights
         self.castleRightsLog = [CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks,
                                              self.currentCastlingRights.wqs, self.currentCastlingRights.bqs)]
+    def transformBoard(self):
+        """Transform the board to FEN-compatible format."""
+        transformedBoard = []
+        for row in self.board:
+            transformedRow = []
+            for square in row:
+                if square == '--':  # Empty square
+                    transformedRow.append('--')
+                else:
+                    # Get the piece type (remove color part)
+                    pieceType = square[1]
+
+                    # Check if the piece is black or white
+                    if square[0] == 'b':  # Black pieces
+                        transformedRow.append(pieceType.lower())  # Convert to lowercase
+                    elif square[0] == 'w':  # White pieces
+                        transformedRow.append(pieceType.upper())  # Convert to uppercase
+            transformedBoard.append(transformedRow)
+        return transformedBoard
+
+    def getFen(self):
+        """Return the FEN string representing the current board state."""
+        fen = ''
         
+        # Get the transformed board in FEN format
+        transformedBoard = self.transformBoard()
+
+        # Iterate through each row of the transformed board
+        for row in transformedBoard:
+            emptyCount = 0
+            for square in row:
+                if square == '--':  # If the square is empty
+                    emptyCount += 1
+                else:
+                    if emptyCount > 0:  # If there were consecutive empty squares before this piece
+                        fen += str(emptyCount)  # Add the number of empty squares
+                        emptyCount = 0
+                    
+                    # Append the piece to the FEN string
+                    fen += square  # Append the transformed piece
+                    
+            if emptyCount > 0:  # If there were empty squares at the end of the row
+                fen += str(emptyCount)
+            
+            fen += '/'  # Separate ranks by '/'
+        
+        fen = fen.strip('/')  # Remove trailing '/'
+        
+        # Add the turn part: 'w' for white's turn or 'b' for black's turn
+        fen += ' ' + ('w' if self.whiteToMove else 'b')
+        
+        # Add castling rights (KQkq format)
+        castlingRights = ''
+        if self.currentCastlingRights.wks: castlingRights += 'K'
+        if self.currentCastlingRights.wqs: castlingRights += 'Q'
+        if self.currentCastlingRights.bks: castlingRights += 'k'
+        if self.currentCastlingRights.bqs: castlingRights += 'q'
+        if castlingRights == '': castlingRights = '-'
+        
+        fen += ' ' + castlingRights
+        
+        # Add en passant: square where en passant is possible or '-'
+        if self.enpassantPossible == ():
+            fen += ' -'
+        else:
+            # En passant square, e.g., 'e3'
+            fen += ' ' + self.getChessNotation(self.enpassantPossible)
+        
+        # Add halfmove clock (for draw detection) and fullmove number
+        fen += ' 0 1'  # Assuming no halfmove clock and the game is on the 1st full move
+        
+        return fen
+
+    # Helper function to convert coordinates like (x, y) to chess notation ('a1', 'b3', etc.)
+    def getChessNotation(self, coords):
+        """Convert a tuple of coordinates (x, y) to chess notation (e.g., (0, 0) -> 'a8')."""
+        col = chr(coords[1] + ord('a'))  # Convert column index to letter
+        row = str(8 - coords[0])  # Convert row index to number (8 -> 1, etc.)
+        return col + row
+
+
     '''
     Take a Move as a parametter and excutes it
     '''
-    
     def makeMove(self, move):
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
@@ -452,13 +532,13 @@ class GameState():
                                 (i == 1 and type == 'p' and (
                                     (enemyColor == 'w' and (4 <= j <= 5)) or
                                     (enemyColor == 'b' and (6 <= j <= 7)))) \
-                                    or type == 'Q' or (i == 1 and type == 'K'):
+                                or type == 'Q' or (i == 1 and type == 'K'):
                             return True
                         else:
                             break
                 else:
                     break
-                    
+
         knightMoves = [(-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1)]
         for m in knightMoves:
             endRow = r + m[0]
@@ -467,8 +547,9 @@ class GameState():
                 endPiece = self.board[endRow][endCol]
                 if endPiece[0] == enemyColor and endPiece[1] == 'N':
                     return True
-                    
+
         return False
+
     
     '''
     return if the player in check, a list of pins, and list of check
@@ -481,13 +562,11 @@ class GameState():
         if self.whiteToMove:
             enemyColor = 'b'
             allyColor = 'w'
-            startRow = self.whiteKingLocation[0]
-            startCol = self.whiteKingLocation[1]
+            startRow, startCol = self.whiteKingLocation
         else:
             enemyColor = 'w'
             allyColor = 'b'
-            startRow = self.blackKingLocation[0]
-            startCol = self.blackKingLocation[1]
+            startRow, startCol = self.blackKingLocation
 
         directions = [
             (-1, 0), (0, -1), (1, 0), (0, 1),  # Rook directions
@@ -496,14 +575,14 @@ class GameState():
 
         for j in range(len(directions)):
             d = directions[j]
-            possiblePin = ()
+            possiblePin = None
             for i in range(1, 8):
                 endRow = startRow + d[0] * i
                 endCol = startCol + d[1] * i
                 if 0 <= endRow < 8 and 0 <= endCol < 8:
                     endPiece = self.board[endRow][endCol]
                     if endPiece[0] == allyColor and endPiece[1] != 'K':
-                        if possiblePin == ():
+                        if possiblePin is None:
                             possiblePin = (endRow, endCol, d[0], d[1])
                         else:
                             break
@@ -514,8 +593,8 @@ class GameState():
                                 (i == 1 and type == 'p' and (
                                     (enemyColor == 'w' and 6 <= j <= 7) or
                                     (enemyColor == 'b' and 4 <= j <= 5))) \
-                                    or type == 'Q' or (i == 1 and type == 'K'):
-                            if possiblePin == ():
+                                or type == 'Q' or (i == 1 and type == 'K'):
+                            if possiblePin is None:
                                 inCheck = True
                                 checks.append((endRow, endCol, d[0], d[1]))
                                 break
@@ -546,39 +625,37 @@ class CastleRights():
         self.wqs = wqs  # White queen-side
         self.bqs = bqs  # Black queen-side
 
-class Move():
+class Move:
     ranksToRows = {"1":7,"2":6,"3":5,"4":4,"5":3,"6":2,"7":1,"8":0}
     rowsToRanks = {v:k for k,v in ranksToRows.items()}
     filesToCols = {"a":0,"b":1,"c":2,"d":3,"e":4,"f":5, "g":6,"h":7}
     colsToFiles = {v:k for k,v in filesToCols.items()}
     
-    def __init__(self, startSq , endSq, board,pawnPromotion = False, isEnpassantMove = False, isCastleMove = False): #optional parameter
+    def __init__(self, startSq , endSq, board, pawnPromotion=False, isEnpassantMove=False, isCastleMove=False):
         self.startRow = startSq[0]
         self.startCol = startSq[1]
         self.endRow = endSq[0]
         self.endCol = endSq[1]
         self.pieceMoved = board[self.startRow][self.startCol]
         self.pieceCaptured = board[self.endRow][self.endCol]
-        #promo
+        
+        # Pawn promotion handling
         self.pawnPromotion = pawnPromotion
-        #en passant    
+        
+        # En passant move handling
         self.isEnpassantMove = isEnpassantMove
         if self.isEnpassantMove:
             self.pieceCaptured = 'wp' if self.pieceMoved == 'bp' else 'bp'
-            
+        
         self.isCapture = self.pieceCaptured != '--'
         self.isCastleMove = isCastleMove
         self.moveID = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol
-        # print(self.moveID)
         
-    '''
-    Overriding a the equals method
-    '''
-    def __eq__ (self, other):
+    def __eq__(self, other):
         if isinstance(other, Move):
             return self.moveID == other.moveID
         return False
-            
+        
     def getChessNotation(self):
         return self.getRanksFiles(self.startRow, self.startCol) + self.getRanksFiles(self.endRow, self.endCol)
         
@@ -586,22 +663,43 @@ class Move():
         return self.colsToFiles[c] + self.rowsToRanks[r]
     
     def __str__(self):
-        # castle move
         if self.isCastleMove:
             return "O-O" if self.endCol == 6 else "O-O-O"
         
         endSquare = self.getRanksFiles(self.endRow, self.endCol)
-        #pawn move
         if self.pieceMoved[1] == 'p':
             if self.isCapture:
                 return self.colsToFiles[self.startCol] + "x" + endSquare
             else:
                 return endSquare
-            
-        #pawn promo
         
-        #pieceMove
         moveString = self.pieceMoved[1]
         if self.isCapture:
             moveString += "x"
         return moveString + endSquare
+    
+    @staticmethod
+    def fromUci(uci, board):
+        """Create a Move object from a UCI string (e.g., 'e2e4')."""
+        # UCI format is: <startFile><startRank><endFile><endRank> (e.g., 'e2e4')
+        startFile = uci[0]
+        startRank = uci[1]
+        endFile = uci[2]
+        endRank = uci[3]
+        
+        # Convert files (letters) to column indices
+        startCol = Move.filesToCols[startFile]
+        endCol = Move.filesToCols[endFile]
+        
+        # Convert ranks (numbers) to row indices
+        startRow = Move.ranksToRows[startRank]
+        endRow = Move.ranksToRows[endRank]
+        
+        pieceMoved = board[startRow][startCol]
+        pawnPromotion = False
+        
+        # Check for pawn promotion
+        if pieceMoved[1] == 'p' and (endRow == 0 or endRow == 7):  # Pawn promotion happens on the last row
+            pawnPromotion = True
+        
+        return Move((startRow, startCol), (endRow, endCol), board, pawnPromotion)

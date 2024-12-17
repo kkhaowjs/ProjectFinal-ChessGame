@@ -1,153 +1,53 @@
-import random
+import chess
+import chess.engine
 
-pieceScore = {"K": 0, "Q": 9, "R": 5, "B": 3, "N": 3, "p": 1}
-CHECKMATE = 1000
-STALEMATE = 0
-DEPTH = 3
+# Define the correct path to your Stockfish executable
+STOCKFISH_PATH = "C:\\Users\\jetsa\\OneDrive\\Desktop\\stockfish\\stockfish-windows-x86-64-avx2.exe"
 
-def findRandomMove(validMoves):
-    return validMoves[random.randint(0, len(validMoves)-1)]
-
-def  findBestMoveMinMaxWithNoRecursion(gs, validMoves):
-    turnMultiplier = 1 if gs.whiteToMove else -1
-    opponentMinMaxScore = CHECKMATE
-    bestPlyerMove = None
-    random.shuffle(validMoves)
-    for playerMove in validMoves:
-        gs.makeMove(playerMove)
-        opponentMoves = gs.getValidMoves()
-        if gs.stalemate:
-            opponentMaxScore = STALEMATE
-        elif gs.checkmate:
-            opponentMaxScore = -CHECKMATE
-        else:
-            opponentMaxScore = -CHECKMATE
-            for opponentMove in opponentMoves:
-                gs.makeMove(opponentMove)
-                gs.getValidMoves()
-                if gs.checkmate:
-                    score = CHECKMATE
-                elif gs.stalemate:
-                    score = STALEMATE
-                else:
-                    score = -turnMultiplier * scoreMaterial(gs.board)
-                if score < opponentMaxScore:
-                    opponentMaxScore = score
-                gs.undoMove()
-        if opponentMaxScore < opponentMinMaxScore:
-            opponentMinMaxScore = opponentMaxScore
-            bestPlyerMove = playerMove
-        gs.undoMove()
-    return bestPlyerMove
-
-def findBestMoveMinMax(gs, validMoves):
-    global nextMove
-    nextMove = None
-    findBestMoveMinMaxWithNoRecursion(gs, validMoves)
-    return nextMove
-
-def findMoveMinMax(gs, validMoves, depth, whiteToMove):
-    global nextMove
-    if depth == 0:
-        return scoreMaterial(gs.board)
+def findBestMoveStockfish(fen: str, time_limit=1.0, skill_level=10):
+    """
+    Uses Stockfish to find the best move for a given FEN position with an adjustable Elo rating.
     
-    if whiteToMove:
-        maxScore = -CHECKMATE
-        for move in validMoves:
-            gs.makeMove(move)
-            nextMoves = gs.getValidMoves()
-            score = findMoveMinMax(gs, nextMoves, depth - 1, False)
-            if score > maxScore:
-                maxScore = score
-                if depth == DEPTH:
-                    nextMove = move
-            gs.undoMove()
-        return maxScore
-            
-    else:
-        minScore = CHECKMATE
-        for move in validMoves:
-            gs.makeMove(move)
-            nextMoves = gs.getValidMoves()
-            score = findMoveMinMax(gs, nextMoves, depth - 1, True)
-            if score < minScore:
-                minScore = score
-                if depth == DEPTH:
-                    nextMove = move
-            gs.undoMove()
-        return minScore
-
-def findBestMoveNegaMax(gs, validMoves):
-    global nextMove, counter
-    nextMove = None
-    random.shuffle(validMoves)
-    counter = 0
-    findMoveNegaMax(gs, validMoves, DEPTH, 1 if gs.whiteToMove else -1)
-    # findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
-    return nextMove
-
-def findMoveNegaMax(gs, validMoves, depth, turnMultiplier):
-    global nextMove, counter
-    if depth == 0:
-        return turnMultiplier * scoreBoard(gs)
-    maxScore = -CHECKMATE
-    for move in validMoves:
-        gs.makeMove(move)
-        nextMove = gs.getValidMoves()
-        score = -findMoveNegaMax(gs, nextMove, depth - 1, -turnMultiplier)
-        if score > maxScore:
-            maxScore = score
-            if depth == DEPTH:
-                nextMove = move
-        gs.undoMove()
-    return maxScore
-
-def findMoveNegaMaxAlphaBeta(gs, validMoves, depth, alpha, beta, turnMultiplier):
-    global nextMove, counter
-    counter += 1
-    if depth == 0:
-        return turnMultiplier * scoreBoard(gs)
-
+    Args:
+        fen (str): The FEN string representing the chessboard position.
+        time_limit (float): Time limit for Stockfish's analysis in seconds.
+        skill_level (int): The skill level of the bot (0-20).
     
-    maxScore = -CHECKMATE
-    for move in validMoves:
-        gs.makeMove(move)
-        nextMove = gs.getValidMoves()
-        score = -findMoveNegaMaxAlphaBeta(gs, nextMove, depth - 1, -beta, -alpha, -turnMultiplier)
-        if score > maxScore:
-            maxScore = score
-            if depth == DEPTH:
-                nextMove = move
-        gs.undoMove()
-        if maxScore > alpha:
-            alpha = maxScore
-        if alpha >= beta:
-            break
-    return maxScore
+    Returns:
+        str: The best move in UCI format (e.g., 'e2e4').
+    """
+    try:
+        # Start the Stockfish engine
+        with chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH) as engine:
+            # Set the skill level based on the Elo
+            # Map Elo rating to Stockfish's skill level (e.g., 0-20 range)
+            engine.configure({"Skill Level": skill_level})
 
-def scoreBoard(gs):
-    if gs.checkmate:
-        if gs.whiteToMove:
-            return -CHECKMATE # Black wins
-        else:
-            return CHECKMATE # White wins
-    elif gs.stalemate:
-        return STALEMATE
-    score = 0
-    for row in gs.board:
-        for square in row:
-            if square[0] == 'w':
-                score += pieceScore[square[1]]
-            elif square[0] == 'b':
-                score -= pieceScore[square[1]]
-    return score
+            # Create a board from the FEN
+            board = chess.Board(fen)
 
-def scoreMaterial(board):
-    score = 0
-    for row in board:
-        for square in row:
-            if square[0] == 'w':
-                score += pieceScore[square[1]]
-            elif square[0] == 'b':
-                score -= pieceScore[square[1]]
-    return score
+            # Get the best move
+            result = engine.play(board, chess.engine.Limit(time=time_limit))
+            return result.move.uci()
+    except Exception as e:
+        print(f"Error using Stockfish: {e}")
+        return None
+
+
+def adjustableBotElo(fen: str, elo_rating: int, time_limit=1.0):
+    """
+    Adjusts the bot's difficulty based on the Elo rating.
+    
+    Args:
+        fen (str): The FEN string representing the chessboard position.
+        elo_rating (int): The Elo rating for the bot (e.g., 1200, 1500, 2000).
+        time_limit (float): Time limit for Stockfish's analysis in seconds.
+    
+    Returns:
+        str: The best move in UCI format.
+    """
+    # Adjust skill level based on Elo rating
+    skill_level = (elo_rating - 1000) // 100  # Map Elo to Stockfish skill level (0-20)
+    skill_level = max(0, min(20, skill_level))  # Ensure skill level is between 0 and 20
+
+    return findBestMoveStockfish(fen, time_limit, skill_level)
