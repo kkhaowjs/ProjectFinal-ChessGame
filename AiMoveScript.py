@@ -34,7 +34,7 @@ def findBestMoveStockfish(fen: str, time_limit=1.0, skill_level=10):
         return None
 
 
-def adjustableBotElo(fen: str, elo_rating: int, time_limit=1.0):
+def adjustableBotElo(fen: str, elo_rating: int, time_limit=2.0):
     """
     Adjusts the bot's difficulty based on the Elo rating.
     
