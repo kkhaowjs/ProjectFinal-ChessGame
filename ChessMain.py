@@ -11,9 +11,10 @@ SQ_SIZE = BOARD_HEIGHT // DIMENSION
 MAX_FPS = 30
 IMAGES = {}
 
-#customize colors
+# customize colors
 green1 = (235, 237, 209)
 green2 = (100, 164, 96)
+
 
 def loadImages():
     """Load images for chess pieces."""
@@ -21,10 +22,11 @@ def loadImages():
     for piece in pieces:
         IMAGES[piece] = p.transform.scale(p.image.load("images/" + piece + ".png"), (SQ_SIZE, SQ_SIZE))
 
+
 def main():
     """Main driver for the game, handling user input and updating the display."""
     p.init()
-    screen = p.display.set_mode((BOARD_WIDTH , BOARD_HEIGHT)) #+ MOVE_LOG_PANEL_WIDTH
+    screen = p.display.set_mode((BOARD_WIDTH , BOARD_HEIGHT))  # + MOVE_LOG_PANEL_WIDTH
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     moveLogFont = p.font.SysFont("Arial", 14, False, False)
@@ -89,12 +91,12 @@ def main():
                     animate = False
                     gameOver = False 
                     print(f"Restart the game")
-                if e.key == p.K_t: # Press 't' to Resign
+                if e.key == p.K_t:  # Press 't' to Resign
                     gameOver = True
                     winner = "Black" if gs.whiteToMove else "White"
                     print(f"{winner} wins by resignation!")
                 
-                if e.key == p.K_q: # Press 'q' to Quit
+                if e.key == p.K_q:  # Press 'q' to Quit
                     running = False
                     print(f"Quit game")
                     p.quit()
@@ -134,7 +136,8 @@ def main():
         clock.tick(MAX_FPS)
         p.display.flip()
 
-def drawGameState(screen, gs, validMoves, sqSelected, moveLogFont):
+
+def drawGameState(screen, gs, validMoves, sqSelected, _):  # moveLogFont
     drawBoard(screen)
     highLightSquares(screen, gs, validMoves, sqSelected)
     drawPiece(screen, gs.board)
@@ -146,7 +149,7 @@ def highlightLastMove(screen, gs):
     moveLog = gs.moveLog
     if moveLog:
         lastMove = moveLog[-1]
-        highlightColor = (255,255,100,128)
+        highlightColor = (255, 255, 100, 128)
 
         highlightSurface = p.Surface((SQ_SIZE, SQ_SIZE), p.SRCALPHA)
         highlightSurface.fill(highlightColor)
@@ -167,13 +170,14 @@ def drawBoard(screen):
             rect = p.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE)
             p.draw.rect(screen, color, rect)
 
+
 def highLightSquares(screen, gs, validMoves, sqSelected):
     if sqSelected != ():
         r, c = sqSelected
         if gs.board[r][c][0] == ('w' if gs.whiteToMove else 'b'):
             s = p.Surface((SQ_SIZE, SQ_SIZE), p.SRCALPHA)
 
-            s.fill(p.Color(255,255,100,128))
+            s.fill(p.Color(255, 255, 100, 128))
             
             screen.blit(s, (c * SQ_SIZE, r * SQ_SIZE))
 
@@ -188,9 +192,9 @@ def highLightSquares(screen, gs, validMoves, sqSelected):
                     
                     screen.blit(validMoveSurface, (move.endCol * SQ_SIZE, move.endRow * SQ_SIZE))
 
-
     if gs.checkmate or gs.stalemate:
         return
+
 
 def drawPiece(screen, board):
     for r in range(DIMENSION):
@@ -225,8 +229,8 @@ def drawPiece(screen, board):
 #         screen.blit(textObject, textLocation)
 #         textY += textObject.get_height() + lineSpacing
 
+
 def animateMove(move, screen, board, clock):
-    coords = []
     dR = move.endRow - move.startRow
     dC = move.endCol - move.startCol
     baseFramePerSquare = 20
@@ -245,7 +249,6 @@ def animateMove(move, screen, board, clock):
         endSquare = p.Rect(move.endCol * SQ_SIZE, move.endRow * SQ_SIZE, SQ_SIZE, SQ_SIZE)
         # p.draw.rect(screen, color, startSquare)
         # p.draw.rect(screen, color, endSquare)
-        
 
         if move.pieceCaptured != "--":
             if move.isEnpassantMove:
@@ -259,6 +262,7 @@ def animateMove(move, screen, board, clock):
         p.display.flip()
         clock.tick(120)
 
+
 def drawEndGameText(screen, text):
     font = p.font.SysFont("Helvitca", 48, True, False)
     textObject = font.render(text, 0, p.Color('White'))
@@ -266,6 +270,7 @@ def drawEndGameText(screen, text):
     screen.blit(textObject, textLocation)
     textObject = font.render(text, 0, p.Color('Black'))
     screen.blit(textObject, textLocation.move(2, 2))
+
 
 if __name__ == "__main__":
     main()

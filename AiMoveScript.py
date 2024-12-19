@@ -1,8 +1,9 @@
-import chess
+import chess  # noqa: F401
 import chess.engine
 
 # Define the correct path to your Stockfish executable
 STOCKFISH_PATH = "C:\\Users\\jetsa\\OneDrive\\Desktop\\stockfish\\stockfish-windows-x86-64-avx2.exe"
+
 
 def findBestMoveStockfish(fen: str, time_limit=1.0, skill_level=10):
     """
@@ -22,11 +23,7 @@ def findBestMoveStockfish(fen: str, time_limit=1.0, skill_level=10):
             # Set the skill level based on the Elo
             # Map Elo rating to Stockfish's skill level (e.g., 0-20 range)
             engine.configure({"Skill Level": skill_level})
-
-            # Create a board from the FEN
             board = chess.Board(fen)
-
-            # Get the best move
             result = engine.play(board, chess.engine.Limit(time=time_limit))
             return result.move.uci()
     except Exception as e:
