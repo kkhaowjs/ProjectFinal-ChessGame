@@ -116,6 +116,24 @@ def main():
             aiMove = AiMoveScript.adjustableBotElo(fen, elo_rating=aiEloRating, time_limit=1.0)
             if aiMove:
                 move = ChessEngine.Move.fromUci(aiMove, gs.board)
+
+                # Correctly set isCastleMove if necessary
+                if abs(move.startCol - move.endCol) == 2 and move.pieceMoved[1].upper() == 'K': # Check if the move is a king move of two squares (castling), case-insensitive
+                    move.isCastleMove = True
+                    if move.pieceMoved[0] == 'w': #white castle
+                        if move.endCol > move.startCol: # Kingside castling (right)
+                            move.rookStartCol = 7
+                            move.rookEndCol = 5
+                        else: # Queenside castling (left)
+                            move.rookStartCol = 0
+                            move.rookEndCol = 3
+                    else: #black castle
+                        if move.endCol > move.startCol: # Kingside castling (right)
+                            move.rookStartCol = 7
+                            move.rookEndCol = 5
+                        else: # Queenside castling (left)
+                            move.rookStartCol = 0
+                            move.rookEndCol = 3
                 gs.makeMove(move)
                 moveMade = True
                 animate = True
