@@ -452,7 +452,7 @@ class GameState():
     '''
     Get all King moves
     '''
-
+    
     def getKingMoves(self, r, c, moves):
         rowMoves = (-1, -1, -1, 0, 0, 1, 1, 1)
         colMoves = (-1, 0, 1, -1, 1, -1, 0, 1)
@@ -476,6 +476,7 @@ class GameState():
                     tempGameState.whiteToMove = self.whiteToMove
                     if not tempGameState.squareUnderAttack(endRow, endCol, allyColor):
                         moves.append(Move((r, c), (endRow, endCol), self.board))
+        self.getCastleMoves(r, c, moves, allyColor)
     
     def getCastleMoves(self, r, c, moves, allyColor):
         self.inCheck = self.squareUnderAttack(r, c, allyColor)
