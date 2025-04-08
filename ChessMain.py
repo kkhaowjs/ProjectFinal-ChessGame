@@ -20,7 +20,7 @@ def loadImages():
     """Load images for chess pieces."""
     pieces = ['wp', 'wR', 'wN', 'wB', 'wQ', 'wK', 'bp', 'bR', 'bN', 'bB', 'bQ', 'bK']
     for piece in pieces:
-        IMAGES[piece] = p.transform.scale(p.image.load("images/" + piece + ".png"), (SQ_SIZE, SQ_SIZE))
+        IMAGES[piece] = p.transform.scale(p.image.load("Chess/ProjectFinal-ChessGame/images/" + piece + ".png"), (SQ_SIZE, SQ_SIZE))
 
 
 def main():
@@ -40,7 +40,7 @@ def main():
     playerClicks = []
     gameOver = False
     playerOne = False  # Human playing white
-    playerTwo = True  # Human playing black
+    playerTwo = False  # Human playing black
     
 
     while running:
@@ -108,8 +108,8 @@ def main():
         # AI Move
         if not gameOver and not humanTurn:
             fen = gs.getFen()
-            we = 800
-            be = 2800
+            we = 2800
+            be = 100
             # aiEloRating = 100
             # Dynamically set AI Elo rating based on game state
             # if gs.turnCount < 20:
