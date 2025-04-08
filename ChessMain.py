@@ -1,6 +1,6 @@
 import sys
 import pygame as p
-import ChessEngine, AiMoveScript
+import ChessEngine, AiMoveScript, MiniMax
 
 # Constants
 BOARD_WIDTH = BOARD_HEIGHT = 512
@@ -40,7 +40,8 @@ def main():
     playerClicks = []
     gameOver = False
     playerOne = False  # Human playing white
-    playerTwo = False  # Human playing black
+    playerTwo = True  # Human playing black
+    
 
     while running:
         humanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
@@ -79,6 +80,8 @@ def main():
                         moveMade = True
                         animate = False
                         gameOver = False 
+                        if playerOne or playerTwo:
+                            gs.undoMove()
                     else:
                         print("Cannot undo after checkmate or stalemate!")
             
@@ -105,7 +108,9 @@ def main():
         # AI Move
         if not gameOver and not humanTurn:
             fen = gs.getFen()
-            aiEloRating = 2000
+            we = 800
+            be = 2800
+            # aiEloRating = 100
             # Dynamically set AI Elo rating based on game state
             # if gs.turnCount < 20:
             #     aiEloRating = 1200  # Easy for first 20 moves
@@ -113,7 +118,8 @@ def main():
             #     aiEloRating = 1600  # Medium difficulty after 20 moves
             # else:
             #     aiEloRating = 2000  # Hard for endgame
-            aiMove = AiMoveScript.adjustableBotElo(fen, elo_rating=aiEloRating, time_limit=1.0)
+            aiMove = AiMoveScript.adjustableBotElo(fen, time_limit=1.0, white_elo=we, black_elo=be)
+            # aiMove = MiniMax.MiNimaxfindBestMove(fen, time_limit=1.0, skill_level=7)
             if aiMove:
                 move = ChessEngine.Move.fromUci(aiMove, gs.board)
 

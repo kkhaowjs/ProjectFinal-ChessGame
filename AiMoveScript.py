@@ -1,29 +1,46 @@
 import chess  # noqa: F401
 import chess.engine
-
 # Define the correct path to your Stockfish executable
 STOCKFISH_PATH = "C:\\Users\\jetsa\\OneDrive\\Desktop\\stockfish\\stockfish-windows-x86-64-avx2.exe"
 
 
-def findBestMoveStockfish(fen: str, time_limit=1.0, skill_level=10):
+def findBestMoveStockfish(fen: str, time_limit=1.0, white_elo=1500, black_elo=1500):
     """
-    Uses Stockfish to find the best move for a given FEN position with an adjustable Elo rating.
+    Uses Stockfish to find the best move for a given FEN position with adjustable Elo ratings for white and black.
     
     Args:
         fen (str): The FEN string representing the chessboard position.
         time_limit (float): Time limit for Stockfish's analysis in seconds.
-        skill_level (int): The skill level of the bot (0-20).
+        white_elo (int): The Elo rating for the white pieces.
+        black_elo (int): The Elo rating for the black pieces.
     
     Returns:
         str: The best move in UCI format (e.g., 'e2e4').
     """
     try:
+        # Determine whose turn it is
+        board = chess.Board(fen)
+        is_white_turn = board.turn == chess.WHITE
+        
+        # Choose Elo rating based on whose turn it is
+        elo_rating = white_elo if is_white_turn else black_elo
+        
+        # Adjust skill level based on Elo rating
+        if elo_rating < 800:
+            skill_level = 0
+        elif elo_rating < 1500:
+            skill_level = 5
+        elif elo_rating < 2000:
+            skill_level = 10
+        elif elo_rating < 2500:
+            skill_level = 15
+        else:
+            skill_level = 20
+
         # Start the Stockfish engine
         with chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH) as engine:
             # Set the skill level based on the Elo
-            # Map Elo rating to Stockfish's skill level (e.g., 0-20 range)
             engine.configure({"Skill Level": skill_level})
-            board = chess.Board(fen)
             result = engine.play(board, chess.engine.Limit(time=time_limit))
             return result.move.uci()
     except Exception as e:
@@ -31,21 +48,17 @@ def findBestMoveStockfish(fen: str, time_limit=1.0, skill_level=10):
         return None
 
 
-
-def adjustableBotElo(fen: str, elo_rating: int, time_limit=2.0):
+def adjustableBotElo(fen: str, white_elo: int, black_elo: int, time_limit=2.0):
     """
-    Adjusts the bot's difficulty based on the Elo rating.
+    Adjusts the bot's difficulty based on the Elo ratings for white and black.
     
     Args:
         fen (str): The FEN string representing the chessboard position.
-        elo_rating (int): The Elo rating for the bot (e.g., 1200, 1500, 2000).
+        white_elo (int): The Elo rating for the white pieces.
+        black_elo (int): The Elo rating for the black pieces.
         time_limit (float): Time limit for Stockfish's analysis in seconds.
     
     Returns:
         str: The best move in UCI format.
     """
-    # Adjust skill level based on Elo rating
-    skill_level = (elo_rating - 1000) // 100  # Map Elo to Stockfish skill level (0-20)
-    skill_level = max(0, min(20, skill_level))  # Ensure skill level is between 0 and 20
-
-    return findBestMoveStockfish(fen, time_limit, skill_level)
+    return findBestMoveStockfish(fen, time_limit, white_elo, black_elo)
