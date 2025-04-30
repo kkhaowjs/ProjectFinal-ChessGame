@@ -1,6 +1,5 @@
 import chess  # noqa: F401
 import chess.engine
-# Define the correct path to your Stockfish executable
 STOCKFISH_PATH = "C:\\Users\\jetsa\\OneDrive\\Desktop\\stockfish\\stockfish-windows-x86-64-avx2.exe"
 
 
@@ -18,13 +17,9 @@ def findBestMoveStockfish(fen: str, time_limit=1.0, white_elo=1500, black_elo=15
         str: The best move in UCI format (e.g., 'e2e4').
     """
     try:
-        # Determine whose turn it is
         board = chess.Board(fen)
         is_white_turn = board.turn == chess.WHITE
-        
-        # Choose Elo rating based on whose turn it is
         elo_rating = white_elo if is_white_turn else black_elo
-        
         # Adjust skill level based on Elo rating
         if elo_rating < 800:
             skill_level = 0
@@ -37,9 +32,7 @@ def findBestMoveStockfish(fen: str, time_limit=1.0, white_elo=1500, black_elo=15
         else:
             skill_level = 20
 
-        # Start the Stockfish engine
         with chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH) as engine:
-            # Set the skill level based on the Elo
             engine.configure({"Skill Level": skill_level})
             result = engine.play(board, chess.engine.Limit(time=time_limit))
             return result.move.uci()

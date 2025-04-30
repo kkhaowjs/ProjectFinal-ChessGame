@@ -1,8 +1,6 @@
 """
 Responsible for starting all the information about state of a chess game.
 """
-
-
 class GameState():
 
     def __init__(self):
@@ -42,9 +40,62 @@ class GameState():
         self.enpassantPossible = ()
         self.enpassantPossibleLog = [self.enpassantPossible]
         
+        self.boardStates = {}
+        self.halfmoveClock = 0
+        
         self.currentCastlingRights = CastleRights(True, True, True, True)  # Initialize castling rights
         self.castleRightsLog = [CastleRights(self.currentCastlingRights.wks, self.currentCastlingRights.bks,
                                              self.currentCastlingRights.wqs, self.currentCastlingRights.bqs)]
+        
+    def getFenForCheckRule(self):
+        rows = []
+        for row in self.board:
+            empty = 0
+            fen_row = ""
+            for square in row:
+                if square == "--":
+                    empty += 1
+                else:
+                    if empty > 0:
+                        fen_row += str(empty)
+                        empty = 0
+                    piece = square[1]
+                    fen_row += piece.upper() if square[0] == 'w' else piece.lower()
+            if empty > 0:
+                fen_row += str(empty)
+            rows.append(fen_row)
+
+        board_fen = "/".join(rows)
+        turn = "w" if self.whiteToMove else "b"
+        return board_fen + " " + turn
+    
+    def isDrawByInsufficientMaterial(self):
+        """
+        Return True if the only pieces left are:
+        - King vs King
+        - King vs King + Bishop
+        - King vs King + Knight
+        - King + Bishop vs King + Bishop on same color
+        """
+        pieces = []
+
+        for row in self.board:
+            for square in row:
+                if square != "--":
+                    pieces.append(square)
+
+        if len(pieces) == 2:
+            return True
+        elif len(pieces) == 3:
+            for piece in pieces:
+                if piece[1] not in ("K", "N", "B"):
+                    return False
+            return True
+        elif len(pieces) == 4:
+            bishops = [p for p in pieces if p[1] == "B"]
+            if len(bishops) == 2:
+                return True
+        return False
         
     def transformBoard(self):
         """Transform the board to FEN-compatible format."""
@@ -140,6 +191,17 @@ class GameState():
                 self.board[move.endRow][move.endCol+1] = self.board[move.endRow][move.endCol-2] #moves the rook
                 self.board[move.endRow][move.endCol-2] = '--' #erase old rook
                 
+        if move.pieceMoved[1] == "P" or move.pieceCaptured != "--":
+            self.halfmoveClock = 0
+        else:
+            self.halfmoveClock += 1
+
+        fen = self.getFen()
+        if fen in self.boardStates:
+            self.boardStates[fen] += 1
+        else:
+            self.boardStates[fen] = 1
+            
         self.moveLog.append(move)
         
     '''
@@ -279,6 +341,12 @@ class GameState():
                 self.checkmate = True
             else:
                 self.stalemate = True
+        elif self.isDrawByInsufficientMaterial():
+            self.stalemate = True
+        elif self.halfmoveClock >= 100:
+            self.stalemate = True
+        elif self.boardStates.get(self.getFen(), 0) >= 3:
+            self.stalemate = True
         else:
             self.checkmate = False
             self.stalemate = False
@@ -655,11 +723,9 @@ class Move():
         endFile = uci[2]
         endRank = uci[3]
         
-        # Convert files (letters) to column indices
         startCol = Move.filesToCols[startFile]
         endCol = Move.filesToCols[endFile]
         
-        # Convert ranks (numbers) to row indices
         startRow = Move.ranksToRows[startRank]
         endRow = Move.ranksToRows[endRank]
         

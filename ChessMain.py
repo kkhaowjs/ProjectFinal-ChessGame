@@ -1,6 +1,6 @@
 import sys
 import pygame as p
-import ChessEngine, AiMoveScript, MiniMax
+import ChessEngine, AiMoveScript, Aiscriptround172
 
 # Constants
 BOARD_WIDTH = BOARD_HEIGHT = 512
@@ -20,7 +20,7 @@ def loadImages():
     """Load images for chess pieces."""
     pieces = ['wp', 'wR', 'wN', 'wB', 'wQ', 'wK', 'bp', 'bR', 'bN', 'bB', 'bQ', 'bK']
     for piece in pieces:
-        IMAGES[piece] = p.transform.scale(p.image.load("Chess/ProjectFinal-ChessGame/images/" + piece + ".png"), (SQ_SIZE, SQ_SIZE))
+        IMAGES[piece] = p.transform.scale(p.image.load("C:/Users/jetsa/OneDrive/Desktop/projectgraduate/Chess/ProjectFinal-ChessGame/images/" + piece + ".png"), (SQ_SIZE, SQ_SIZE))
 
 
 def main():
@@ -39,8 +39,8 @@ def main():
     sqSelected = ()
     playerClicks = []
     gameOver = False
-    playerOne = False  # Human playing white
-    playerTwo = False  # Human playing black
+    playerOne = True  # (True = Human)
+    playerTwo = True  # (True = Human)
     
 
     while running:
@@ -118,13 +118,11 @@ def main():
             #     aiEloRating = 1600  # Medium difficulty after 20 moves
             # else:
             #     aiEloRating = 2000  # Hard for endgame
-            aiMove = AiMoveScript.adjustableBotElo(fen, time_limit=1.0, white_elo=we, black_elo=be)
-            # aiMove = MiniMax.MiNimaxfindBestMove(fen, time_limit=1.0, skill_level=7)
+            # aiMove = AiMoveScript.adjustableBotElo(fen, time_limit=1.0, white_elo=we, black_elo=be)
+            aiMove = Aiscriptround172.findBestMove(fen)
             if aiMove:
                 move = ChessEngine.Move.fromUci(aiMove, gs.board)
-
-                # Correctly set isCastleMove if necessary
-                if abs(move.startCol - move.endCol) == 2 and move.pieceMoved[1].upper() == 'K': # Check if the move is a king move of two squares (castling), case-insensitive
+                if abs(move.startCol - move.endCol) == 2 and move.pieceMoved[1].upper() == 'K':
                     move.isCastleMove = True
                     if move.pieceMoved[0] == 'w': #white castle
                         if move.endCol > move.startCol: # Kingside castling (right)
